@@ -47,25 +47,25 @@ async def root():
     return {'message':"Welcome to API"}
 
 @app.get('/posts')
-async def get_posts():
-    cursor.execute(""" SELECT * from posts""")
-    posts = cursor.fetchall()
-    
+async def get_posts(db: Session = Depends(get_db)):
+    #sql way
+    # cursor.execute(""" SELECT * from posts""")
+    # posts = cursor.fetchall()
+
+    #through ORM
+    posts = db.query(models.Post).all()
     return {"detail":posts}
 
 @app.get('/posts/{id}')
-def get_post(id: int):  # by passing 
-    
-    # for post in my_posts:
-    #     if post['id']==id:
-    #         return {"detail":post}
+def get_post(id: int,db: Session = Depends(get_db)):  # by passing 
+    #sql 
+    # cursor.execute(""" SELECT * FROM posts WHERE id = %s """,(str(id)))
+    # post = cursor.fetchone()
+    # if not post:
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID was not found")
 
-    # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID was not found")
-
-    cursor.execute(""" SELECT * FROM posts WHERE id = %s """,(str(id)))
-    post = cursor.fetchone()
-    if not post:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ID was not found")
+    #ORM
+    post = db.query(models.Post).filter(models.Post.id == id).first()
 
      
     return {"post":post}
@@ -74,59 +74,68 @@ def get_post(id: int):  # by passing
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-async def create_post(post : Post_):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
-    # Since our my_posts contains array of posts and each post is a dictionary
+async def create_post(post : Post_, db: Session = Depends(get_db)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
+    #Sql way
+    # cursor.execute(""" INSERT INTO posts (title,content,published)  VALUES (%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
+    # post = cursor.fetchone()
+    # conn.commit() # To save the data to DB
 
-    # # post_dict = new_post.dict() # Sinc this new_post is Pydantic model, so if we want to convert this to dic than we can do so by using .dict()
+    #ORM way
+    
+    # new_post = models.Post(title = post.title,content=post.content,published=post.published)
+    new_post = models.Post(**post.dict()) # this ** did the unpacking of the dictionary
+    db.add(new_post) # add this new post to the DB
+    db.commit()
+    db.refresh(new_post) # it retrieves the newly added post form DB and store it in new_post
 
-    # post_dict['id'] = randrange(1,10000000)
-    # my_posts.append(post_dict)
-
-
-    cursor.execute(""" INSERT INTO posts (title,content,published)  VALUES (%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
-    post = cursor.fetchone()
-    conn.commit() # To save the data to DB
-
-    return {"data":post}
+    return {"data":new_post}
 
 
 
 @app.delete('/posts/{id}')
-async def delete_post(id: int):
-    cursor.execute(''' DELETE FROM posts WHERE id = %s RETURNING *''',(str(id),))
-    deleted_post = cursor.fetchone()
-    conn.commit()
+async def delete_post(id: int,db: Session = Depends(get_db)):
+    #sql
+    # cursor.execute(''' DELETE FROM posts WHERE id = %s RETURNING *''',(str(id),))
+    # deleted_post = cursor.fetchone()
+    # conn.commit()
 
-    if deleted_post ==None:
+    #ORMs
+    post = db.query(models.Post).filter(models.Post.id==id)
+
+    if post.first() ==None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail =f'Post with ID {id} in not Found')    
+    
+    post.delete()
+    db.commit()
     
     return {"message": "Post Deleted"}
 
 
 #update Post, it will take ID as path param and the data for Update from the body of the request
 @app.put('/posts/{id}')
-def update_post(id : int, post : Post_):
-    cursor.execute(''' UPDATE posts SET title = %s, content = %s, published = %s where id = %s  returning *''',(post.title,post.content,post.published,str(id)))
-    updated_post = cursor.fetchone()
-    conn.commit()
+def update_post(id : int, post : Post_,db: Session = Depends(get_db)):
+    #sql
+    # cursor.execute(''' UPDATE posts SET title = %s, content = %s, published = %s where id = %s  returning *''',(post.title,post.content,post.published,str(id)))
+    # updated_post = cursor.fetchone()
+    # conn.commit()
 
-    # new_data = new_data.dict()
-    # for post in my_posts:
-    #     if post['id']==id: 
-    #         #since we are sending title and Content for updation
-    #         post['title'] = new_data['title']
-    #         post['Content'] = new_data['Content']
-    #         return {"message":"Post Updated"}
-    if updated_post == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'Post with ID {id} is not Found')     
+    #ORMs
+    post_query = db.query(models.Post).filter(models.Post.id==id)
+    post_ = post_query.first()
+    
+    if post_ == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'Post with ID {id} is not Found')  
 
-    return {'Updated Post': updated_post}   
+    # post_query.update({'title': "my new one",'content': "post.content"},synchronize_session=False)
+    post_query.update(post.dict(),synchronize_session=False)  
+    db.commit() 
+
+    return {'Updated Post': "Success"}   
 
 @app.get('/test')
 def test(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return {"posts": posts}
-
 
 
 
