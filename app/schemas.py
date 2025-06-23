@@ -31,7 +31,9 @@ class Post(BaseModel):
     published: bool
 
     
-class User(BaseModel):
+class UserOut(BaseModel):
     id : int
     email : EmailStr
+
+
     
