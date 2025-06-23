@@ -2,15 +2,15 @@ from fastapi import FastAPI, status, HTTPException, Response, Depends #type:igno
 from fastapi.params import Body #type: ignore
 from typing import Optional, List
 
-
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from random import randrange
 import time 
 from sqlalchemy.orm import Session
-from . import models,schemas  # here . refers to current directory
+from . import models,schemas,utils  # here . refers to current directory
 from .database import engine,get_db
+
 
 models.Base.metadata.create_all(bind=engine) #for table creation based on the classes present in the model 
 
@@ -127,4 +127,17 @@ def update_post(id : int, post : schemas.PostCreate,db: Session = Depends(get_db
 
     return post_query.first()   
 
+#for creating a new user
+@app.post("/users", status_code=status.HTTP_201_CREATED,response_model=schemas.User)
+def create_user(user : schemas.UserCreate,db:Session = Depends(get_db)):
 
+    #password hashing
+    
+    user.password = utils.hash(user.password)
+
+    new_user = models.User(**user.dict()) 
+    db.add(new_user) 
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
