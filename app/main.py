@@ -1,15 +1,15 @@
 from fastapi import FastAPI, status, HTTPException, Response, Depends #type:ignore
 from fastapi.params import Body #type: ignore
-from pydantic import BaseModel, Field #type: ignore  
-#we use this to ensure, the data we got the client should be in our desired format
+from typing import Optional, List
+
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from typing import Optional
+
 from random import randrange
 import time 
 from sqlalchemy.orm import Session
-from . import models  # here . refers to current directory
+from . import models,schemas  # here . refers to current directory
 from .database import engine,get_db
 
 models.Base.metadata.create_all(bind=engine) #for table creation based on the classes present in the model 
@@ -22,11 +22,6 @@ app = FastAPI()
 
 
 
-#So what we want from client for creating the post, we need title, Content 
-class Post_(BaseModel):
-    title : str = Field(...,min_length=3)
-    content: str
-    published: Optional[bool] = True  ## or we can just give a default value and it beomes optional i.e, pub : bool=True
 
 my_posts = []
 
@@ -46,7 +41,7 @@ while True: #if our connection to DB is failed, then the starting of server beco
 async def root():
     return {'message':"Welcome to API"}
 
-@app.get('/posts')
+@app.get('/posts',response_model=List[schemas.Post])
 async def get_posts(db: Session = Depends(get_db)):
     #sql way
     # cursor.execute(""" SELECT * from posts""")
@@ -54,9 +49,9 @@ async def get_posts(db: Session = Depends(get_db)):
 
     #through ORM
     posts = db.query(models.Post).all()
-    return {"detail":posts}
+    return posts
 
-@app.get('/posts/{id}')
+@app.get('/posts/{id}', response_model=schemas.Post)
 def get_post(id: int,db: Session = Depends(get_db)):  # by passing 
     #sql 
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """,(str(id)))
@@ -68,13 +63,13 @@ def get_post(id: int,db: Session = Depends(get_db)):  # by passing
     post = db.query(models.Post).filter(models.Post.id == id).first()
 
      
-    return {"post":post}
+    return post
 
 
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-async def create_post(post : Post_, db: Session = Depends(get_db)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
+@app.post("/posts", status_code=status.HTTP_201_CREATED,response_model=schemas.Post)
+async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
     #Sql way
     # cursor.execute(""" INSERT INTO posts (title,content,published)  VALUES (%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
     # post = cursor.fetchone()
@@ -88,7 +83,7 @@ async def create_post(post : Post_, db: Session = Depends(get_db)):  #Validate a
     db.commit()
     db.refresh(new_post) # it retrieves the newly added post form DB and store it in new_post
 
-    return {"data":new_post}
+    return new_post
 
 
 
@@ -108,12 +103,12 @@ async def delete_post(id: int,db: Session = Depends(get_db)):
     post.delete()
     db.commit()
     
-    return {"message": "Post Deleted"}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 #update Post, it will take ID as path param and the data for Update from the body of the request
-@app.put('/posts/{id}')
-def update_post(id : int, post : Post_,db: Session = Depends(get_db)):
+@app.put('/posts/{id}',response_model=schemas.Post)
+def update_post(id : int, post : schemas.PostCreate,db: Session = Depends(get_db)):
     #sql
     # cursor.execute(''' UPDATE posts SET title = %s, content = %s, published = %s where id = %s  returning *''',(post.title,post.content,post.published,str(id)))
     # updated_post = cursor.fetchone()
@@ -130,12 +125,6 @@ def update_post(id : int, post : Post_,db: Session = Depends(get_db)):
     post_query.update(post.dict(),synchronize_session=False)  
     db.commit() 
 
-    return {'Updated Post': "Success"}   
-
-@app.get('/test')
-def test(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    return {"posts": posts}
-
+    return post_query.first()   
 
 
