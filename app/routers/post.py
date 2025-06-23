@@ -4,10 +4,13 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts",
+    tags=["Posts"]
+)
 
 
-@router.get('/posts',response_model=List[schemas.Post])
+@router.get('/',response_model=List[schemas.Post])
 async def get_posts(db: Session = Depends(get_db)):
     #sql way
     # cursor.execute(""" SELECT * from posts""")
@@ -17,7 +20,7 @@ async def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
 
-@router.get('/posts/{id}', response_model=schemas.Post)
+@router.get('/{id}', response_model=schemas.Post)
 def get_post(id: int,db: Session = Depends(get_db)):  # by passing 
     #sql 
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """,(str(id)))
@@ -34,7 +37,7 @@ def get_post(id: int,db: Session = Depends(get_db)):  # by passing
 
 
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED,response_model=schemas.Post)
+@router.post("/", status_code=status.HTTP_201_CREATED,response_model=schemas.Post)
 async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
     #Sql way
     # cursor.execute(""" INSERT INTO posts (title,content,published)  VALUES (%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
@@ -53,7 +56,7 @@ async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db)):
 
 
 
-@router.delete('/posts/{id}')
+@router.delete('/{id}')
 async def delete_post(id: int,db: Session = Depends(get_db)):
     #sql
     # cursor.execute(''' DELETE FROM posts WHERE id = %s RETURNING *''',(str(id),))
@@ -73,7 +76,7 @@ async def delete_post(id: int,db: Session = Depends(get_db)):
 
 
 #update Post, it will take ID as path param and the data for Update from the body of the request
-@router.put('/posts/{id}',response_model=schemas.Post)
+@router.put('/{id}',response_model=schemas.Post)
 def update_post(id : int, post : schemas.PostCreate,db: Session = Depends(get_db)):
     #sql
     # cursor.execute(''' UPDATE posts SET title = %s, content = %s, published = %s where id = %s  returning *''',(post.title,post.content,post.published,str(id)))
