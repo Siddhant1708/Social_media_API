@@ -13,11 +13,15 @@ class PostBase(BaseModel):
 class PostCreate(PostBase):
     pass
 
-#this model is for data we require form user to create it in out DB 
+#this model is for data we require form user to create it in our DB 
 
 class UserCreate(BaseModel):
     email : EmailStr
     password : str 
+
+class UserLogin(BaseModel):
+    email : EmailStr
+    password : str    
 
 
 
