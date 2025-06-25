@@ -2,6 +2,7 @@ from .. import models,schemas,utils  # here . refers to current directory
 from fastapi import FastAPI, status, HTTPException, Response, Depends, APIRouter #type:ignore
 from sqlalchemy.orm import Session
 from ..database import get_db
+from .. import oauth2
 from typing import List
 
 router = APIRouter(
@@ -38,7 +39,7 @@ def get_post(id: int,db: Session = Depends(get_db)):  # by passing
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED,response_model=schemas.Post)
-async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
+async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db),get_current_user: int = Depends(oauth2.get_current_user)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
     #Sql way
     # cursor.execute(""" INSERT INTO posts (title,content,published)  VALUES (%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
     # post = cursor.fetchone()
