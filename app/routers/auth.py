@@ -9,7 +9,7 @@ router = APIRouter(
     tags=['Authentication']
 )
 
-@router.post('/login')
+@router.post('/login',response_model=schemas.Token)
 def login(user_credentials: OAuth2PasswordRequestForm = Depends() ,db:Session = Depends(get_db)):
     #now the user_credentials will be in OAuth2PasswordRequestForm's format
     #Like it is a dictionary with fields {"username": "", "password": ""} 
@@ -28,6 +28,6 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends() ,db:Session = 
 
 
 
-    return {"Access_Token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer"}
     
 

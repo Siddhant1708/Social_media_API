@@ -2,7 +2,7 @@ from .. import models,schemas,utils  # here . refers to current directory
 from fastapi import FastAPI, status, HTTPException, Response, Depends, APIRouter #type:ignore
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .. import oauth2
+from .. import oauth2,schemas
 from typing import List
 
 router = APIRouter(
@@ -12,7 +12,7 @@ router = APIRouter(
 
 
 @router.get('/',response_model=List[schemas.Post])
-async def get_posts(db: Session = Depends(get_db)):
+async def get_posts(db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user)):
     #sql way
     # cursor.execute(""" SELECT * from posts""")
     # posts = cursor.fetchall()
@@ -22,7 +22,7 @@ async def get_posts(db: Session = Depends(get_db)):
     return posts
 
 @router.get('/{id}', response_model=schemas.Post)
-def get_post(id: int,db: Session = Depends(get_db)):  # by passing 
+def get_post(id: int,db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user)):  # by passing 
     #sql 
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """,(str(id)))
     # post = cursor.fetchone()
@@ -39,14 +39,14 @@ def get_post(id: int,db: Session = Depends(get_db)):  # by passing
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED,response_model=schemas.Post)
-async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db),get_current_user: int = Depends(oauth2.get_current_user)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
+async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db), current_user: schemas.TokenData = Depends(oauth2.get_current_user)):  #Validate and extracts all the field from Body of the post request and convert to Post Model and store that dict in newpost
     #Sql way
     # cursor.execute(""" INSERT INTO posts (title,content,published)  VALUES (%s,%s,%s) RETURNING * """,(post.title,post.content,post.published))
     # post = cursor.fetchone()
     # conn.commit() # To save the data to DB
 
     #ORM way
-    
+    print(current_user)
     # new_post = models.Post(title = post.title,content=post.content,published=post.published)
     new_post = models.Post(**post.dict()) # this ** did the unpacking of the dictionary
     db.add(new_post) # add this new post to the DB
@@ -54,11 +54,11 @@ async def create_post(post : schemas.PostCreate, db: Session = Depends(get_db),g
     db.refresh(new_post) # it retrieves the newly added post form DB and store it in new_post
 
     return new_post
-
+#here is create_post() ,  Depends(oauth2.get_current_user) this actually forces user to be loggedin for creating a post
 
 
 @router.delete('/{id}')
-async def delete_post(id: int,db: Session = Depends(get_db)):
+async def delete_post(id: int,db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user)):
     #sql
     # cursor.execute(''' DELETE FROM posts WHERE id = %s RETURNING *''',(str(id),))
     # deleted_post = cursor.fetchone()
@@ -78,7 +78,7 @@ async def delete_post(id: int,db: Session = Depends(get_db)):
 
 #update Post, it will take ID as path param and the data for Update from the body of the request
 @router.put('/{id}',response_model=schemas.Post)
-def update_post(id : int, post : schemas.PostCreate,db: Session = Depends(get_db)):
+def update_post(id : int, post : schemas.PostCreate,db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user)):
     #sql
     # cursor.execute(''' UPDATE posts SET title = %s, content = %s, published = %s where id = %s  returning *''',(post.title,post.content,post.published,str(id)))
     # updated_post = cursor.fetchone()
