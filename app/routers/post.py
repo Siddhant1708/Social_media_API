@@ -12,14 +12,15 @@ router = APIRouter(
 
 
 #lest do some filtering on how many post we want on this get_posts() route, using query parameter Limit, initially we give any value to the Limit as default
+#we use another query param, i.e, 'skip' which we can think of as a offset that skips the initils number of posts 
 @router.get('/',response_model=List[schemas.Post])
-async def get_posts(db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user),Limit: int = 2):
+async def get_posts(db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user),Limit: int = 10,skip : int = 0):
     #sql way
     # cursor.execute(""" SELECT * from posts""")
     # posts = cursor.fetchall()
 
     #through ORM
-    posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).limit(Limit)
+    posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).limit(Limit).offset(skip).all()
     return posts
 
 @router.get('/{id}', response_model=schemas.Post)
