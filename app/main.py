@@ -14,16 +14,16 @@ models.Base.metadata.create_all(bind=engine) #for table creation based on the cl
 app = FastAPI()
 
 
-while True: #if our connection to DB is failed, then the starting of server becomes irrelevent, so if connection failed , we don't run our server, beacuse of that we used while loop 
-    try:
-        conn = psycopg2.connect(host='localhost',database='fastapi_DB',user='postgres',password='IIT@1708', cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-        print("DB connection successfull")
-        break
-    except Exception as error:
-        print("Connection to DB failed") 
-        print(f'error was {error}')   
-        time.sleep(2)
+# while True: #if our connection to DB is failed, then the starting of server becomes irrelevent, so if connection failed , we don't run our server, beacuse of that we used while loop 
+#     try:
+#         conn = psycopg2.connect(host='localhost',database='fastapi_DB',user='postgres',password='IIT@1708', cursor_factory=RealDictCursor)
+#         cursor = conn.cursor()
+#         print("DB connection successfull")
+#         break
+#     except Exception as error:
+#         print("Connection to DB failed") 
+#         print(f'error was {error}')   
+#         time.sleep(2)
 
 
 

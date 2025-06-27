@@ -3,7 +3,7 @@ from fastapi import FastAPI, status, HTTPException, Response, Depends, APIRouter
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import oauth2,schemas
-from typing import List
+from typing import List,Optional
 
 router = APIRouter(
     prefix="/posts",
@@ -13,14 +13,15 @@ router = APIRouter(
 
 #lest do some filtering on how many post we want on this get_posts() route, using query parameter Limit, initially we give any value to the Limit as default
 #we use another query param, i.e, 'skip' which we can think of as a offset that skips the initils number of posts 
+#we can implement search based on title to get the related posts using 'search' query param 
 @router.get('/',response_model=List[schemas.Post])
-async def get_posts(db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user),Limit: int = 10,skip : int = 0):
+async def get_posts(db: Session = Depends(get_db),current_user: schemas.TokenData = Depends(oauth2.get_current_user),Limit: int = 10,skip : int = 0,search: Optional[str]=''):
     #sql way
     # cursor.execute(""" SELECT * from posts""")
     # posts = cursor.fetchall()
 
     #through ORM
-    posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).limit(Limit).offset(skip).all()
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(Limit).offset(skip).all()
     return posts
 
 @router.get('/{id}', response_model=schemas.Post)
