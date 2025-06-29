@@ -5,6 +5,11 @@ from sqlalchemy.orm import Session
 from fastapi import Depends,status, HTTPException
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
+from .config import settings
+# from dotenv import load_dotenv
+# import os
+
+# load_dotenv()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 # tokenUrl="login" does not automatically call or connect to your /login route — it is just a declaration used by the OpenAPI docs (Swagger at /docs) to know:
@@ -15,9 +20,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 #algorithm
 #expiration time for token
 
-SECRET_KEY = "77t87gg87g8556c6dgus7g8yvo76fv56dfr545oju786fvyuinoiuhy67"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+#-------------------the value from os.getenv() always gives output as a str---------------------
+SECRET_KEY = settings.secret_key
+
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 def create_access_token(data : dict):
     to_encode = data.copy()
