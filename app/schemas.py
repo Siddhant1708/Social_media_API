@@ -1,6 +1,10 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, conint
 from typing import Optional
 from datetime import datetime
+
+
+
+
 
 #So what we want from client for creating the post, we need title, Content 
 #we use this to ensure, the data we got the client should be in our desired format
@@ -33,6 +37,13 @@ class TokenData(BaseModel):
 
 
 
+class Vote(BaseModel):
+    post_id : int
+    dir: conint(le=1) # allows only integers <= 1 becoz 0 means to dislike and 1 means like.
+
+
+
+
 #---------------------------------------------------
 #above models are responsible the handling data for us, i.e the data we want to recieve
 #below model are responsible for handling the data for user, i.e structuring the response for the user OR the data we want to send
@@ -47,7 +58,7 @@ class Post(PostBase):
     created_at: datetime 
     owner_id: int
     owner: UserOut
-
+ 
     
 
 
