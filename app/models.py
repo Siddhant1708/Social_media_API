@@ -6,6 +6,19 @@ from sqlalchemy.sql.expression import text
 
 
 
+#one of the drawback of sqlalchemy is, if our table is created then we can not add, modify or update any coloumn.
+# so what happens is when our server starts, sqlalchemy checks whther a table with name "posts" is present or not., if it is, then it doesnot do anything.
+# so for making changes, we need to drop all the tables and create tables from scratch, ** which we can't do.**
+# it only creates a table, if it has not seen a table with a given name
+
+
+# so we got a tool (**Alembic**, a database migration tool) , which allows us to do these things 
+# since dev can track changes to code and rollback easily, so why can't we do the same for DB's.
+# a DB migration tool allow us to incrementally track changes to DB schema and rollback changes to any point of time.
+# so we will use tool callled Alembic to make changes to out DB.
+# alembic can automatically pull databases model's from sqlalchemy and generate proper tables
+
+
 class Post(Base):
     __tablename__ = 'posts'         # this name is for postgress for the table 
 

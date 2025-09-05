@@ -5,7 +5,7 @@ from .routers import post,user,auth,vote
 from .config import settings
 
 
-models.Base.metadata.create_all(bind=engine) #for table creation based on the classes present in the model 
+# models.Base.metadata.create_all(bind=engine) #for table creation based on the classes present in the model 
 
 app = FastAPI()
 
