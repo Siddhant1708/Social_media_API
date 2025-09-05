@@ -4,10 +4,22 @@ from .database import engine,get_db
 from .routers import post,user,auth,vote
 from .config import settings
 
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # models.Base.metadata.create_all(bind=engine) #for table creation based on the classes present in the model 
 
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(post.router) # includes the router object from post routers
 app.include_router(user.router)
